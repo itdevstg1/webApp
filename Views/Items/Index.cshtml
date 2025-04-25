@@ -1,0 +1,200 @@
+﻿@model WebApplication1.Models.ItemListViewModel
+
+@{
+	ViewData["Title"] = "Home Page";
+}
+
+<h3>Product Page</h3>
+<div class="row mb-4">
+	<div class="col-12 col-sm-6 col-lg-3">
+		<div class="card bg-primary bg-opacity-25 text-primary shadow-sm h-100">
+			<div class="card-body d-flex flex-column justify-content-center text-center">
+				<div class="mb-2">
+					<i class="bi bi-collection fa-2x"></i>
+				</div>
+				<h5 class="card-title mb-0">@Model.TotalItemsInDatabase</h5>
+				<small class="text-muted">Total Products</small>
+			</div>
+		</div>
+	</div>
+	<div class="col-12 col-sm-6 col-lg-3">
+		<div class="card bg-success bg-opacity-10 text-primary shadow-sm h-100">
+			<div class="card-body d-flex flex-column justify-content-center text-center">
+				<div class="mb-2">
+					<i class="bi bi-collection fa-2x"></i>
+				</div>
+				<h5 class="card-title mb-0">@Model.TotalItems</h5>
+				<small class="text-muted">Total Products Query</small>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+<div class="d-flex justify-content-between">
+	<button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createModal">
+		Create
+	</button>
+	<form method="get" class="mb-3">
+		<input type="text" name="Search" value="@Model.Filter.Search" class="form-control d-inline-block w-auto" placeholder="Search" />
+		<select name="Order" class="form-select d-inline-block w-auto">
+			<option value="asc" selected="@(Model.Filter.Order=="asc")">Croissant</option>
+			<option value="desc" selected="@(Model.Filter.Order=="desc")">Decroissant</option>
+		</select>
+		<button type="submit" class="btn btn-primary">Filter</button>
+	</form>
+</div>
+
+
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Price</th>
+			<th>Description</th>
+			<th>Category</th>
+			<th>Actions</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var item in Model.Items)
+		{
+			<tr>
+				<td>
+					<strong class="bg-primary rounded-circle text-white p-1">@item.Name?[0].ToString()</strong>
+					@item.Name
+				</td>
+				<td>@item.Price</td>
+				<td>@(item.Description?.Length > 25 ? item.Description.Substring(0,25)+ "..." : item.Description)</td>
+				<td>@(item.Category?.Name)</td>
+				<td>
+					<!-- Edit button -->
+					<button class="btn btn-warning rounded-2 w-25 text-white" data-bs-toggle="modal" data-bs-target="#editModal_@item.Id">Edit</button>
+					<!-- Delete form -->
+					<form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;" onsubmit="return confirm('Are you sure?');">
+						<button class="btn btn-danger rounded-3 w-25" type="submit">Delete</button>
+					</form>
+				</td>
+			</tr>
+		}
+	</tbody>
+</table>
+<nav class="d-flex justify-content-center">
+	<ul class="pagination">
+		@for(int i = 1; i <= Math.Ceiling((double)Model.TotalItems / Model.Filter.PageSize); i++)
+		{	
+			<li class="page-item @(i == Model.Filter.Page ? "active" : "")">
+				<a class="page-link" asp-action="Index" asp-route-Search="@Model.Filter.Search" asp-route-Order="@Model.Filter.Order" asp-route-Page="@i">
+					@i
+				</a>
+			</li>
+		}
+</ul>
+</nav>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<form asp-action="Create" method="post" class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Create Item</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+					<label asp-for="NewItem.Name"></label>
+					<input asp-for="NewItem.Name" class="form-control" />
+				</div>
+				<div class="form-group">
+					<label asp-for="NewItem.Price"></label>
+					<input asp-for="NewItem.Price" class="form-control" />
+				</div>
+				<div class="form-group">
+					<label asp-for="NewItem.Description"></label>
+					<input asp-for="NewItem.Description" class="form-control" />
+				</div>
+					<div class="form-group">
+						@* <label asp-for="NewItem.CategoryId" class="form-label"></label> *@
+					<select asp-for="NewItem.CategoryId" class="form-select" asp-items="@(new SelectList(Model.Category, "Id", "Name"))" required>
+						<option value="">-- Select a Category --</option>
+					</select>
+
+					</div>
+
+			</div>
+			<div class="modal-footer">
+				<button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Close</button>
+				<button class="btn btn-primary" type="submit">Save changes</button>
+			</div>
+		</form>
+	</div>
+</div>
+
+<!-- EDIT MODALS outside the table -->
+@foreach (var item in Model.Items)
+{
+	<div class="modal fade" id="editModal_@item.Id" tabindex="-1" aria-labelledby="editModalLabel_@item.Id" aria-hidden="true">
+		<div class="modal-dialog">
+			<form asp-action="Edit" method="post" class="modal-content">
+				<input type="hidden" name="Id" value="@item.Id" />
+				<div class="modal-header">
+					<h5 class="modal-title">Edit Item</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="form-group">
+						<label>Name</label>
+						<input class="form-control" name="Name" value="@item.Name" />
+					</div>
+					<div class="form-group">
+						<label>Price</label>
+						<input class="form-control" name="Price" type="number" value="@item.Price" />
+					</div>
+					<div class="form-group">
+						<label>Description</label>
+						<input class="form-control" name="Description" value="@item.Description" />
+					</div>
+					<div class="form-group">
+						<label asp-for="@item.CategoryId" class="form-label"></label>
+						<select name="CategoryId" class="form-select">
+							<option value="">-- Select a Category --</option>
+							@foreach (var cat in Model.Category)
+							{
+								<option value="@cat.Id">@cat.Name</option>
+							}
+						</select>
+
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+					<button class="btn btn-primary" type="submit">Save</button>
+				</div>
+			</form>
+		</div>
+	</div>
+}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+	<div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+		<div class="d-flex">
+			<div class="toast-body">
+				@TempData["ToastMessage"]
+			</div>
+			<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+		</div>
+	</div>
+</div>
+
+@section Scripts{
+	<script>
+		window.addEventListener('DOMContentLoaded',(event)=>{
+			const toastEl = document.getElementById('successToast');
+			if(toastEl && toastEl.querySelector('.toast-body').textContent.trim() !="")
+			{
+				const toast = new bootstrap.Toast(toastEl);
+				toast.show();
+			}
+		});
+	</script>
+}
