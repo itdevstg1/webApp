@@ -15,6 +15,12 @@ namespace WebApplication1.Controllers
             _itemService = itemService;
             _categoryService = categoryService;
         }
+        /// <summary>
+        /// Welcome page with list of items and categories
+        /// Possibility to do pagination and search
+        /// </summary>
+        /// <param name="filter"></param>
+        /// <returns></returns>
         public async Task<IActionResult> Index([FromQuery] ItemFilter filter) 
         {
             var allItems = await _itemService.GetAllItemsAsync();
@@ -50,6 +56,11 @@ namespace WebApplication1.Controllers
 
             return View(vm);
         }
+        /// <summary>
+        /// Add item 
+        /// </summary>
+        /// <param name="NewItem"></param>
+        /// <returns></returns>
 
         [HttpPost]
         public async Task<IActionResult> Create(Item NewItem) 
@@ -70,6 +81,12 @@ namespace WebApplication1.Controllers
             return View("Index",vm);
         }
 
+        /// <summary>
+        /// Edition Item
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+
         [HttpPost]
         public async Task<IActionResult> Edit(Item item)
         {
@@ -88,7 +105,7 @@ namespace WebApplication1.Controllers
             if(item == null) {
                 return NotFound();
             }
-            _itemService.DeleteItemAsync(id);
+            await _itemService.DeleteItemAsync(id);
             TempData["ToastMessage"] = $"{item.Name} deleted succesfully ! ";
             return RedirectToAction(nameof(Index));
         }
